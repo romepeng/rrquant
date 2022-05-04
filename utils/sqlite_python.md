@@ -73,3 +73,26 @@ with open('dump.sql', 'w') as f:
 con.close()
 """
 
+使用连接作为上下文管理器
+连接对象可以用来作为上下文管理器，它可以自动提交或者回滚事务。如果出现异常，事务会被回滚；否则，事务会被提交。
+
+import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("create table lang (id integer primary key, name varchar unique)")
+
+# Successful, con.commit() is called automatically afterwards
+with con:
+    con.execute("insert into lang(name) values (?)", ("Python",))
+
+# con.rollback() is called after the with block finishes with an exception, the
+# exception is still raised and must be caught
+try:
+    with con:
+        con.execute("insert into lang(name) values (?)", ("Python",))
+except sqlite3.IntegrityError:
+    print("couldn't add Python twice")
+
+# Connection object used as context manager only commits or rollbacks transactions,
+# so the connection object should be closed manually
+con.close()
